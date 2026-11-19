@@ -1,0 +1,46 @@
+---
+/** Cabecera sobre la portada: logo, menú (en escritorio) y cambio de idioma */
+import { Image } from 'astro:assets';
+
+import logo from '../fotos/logo-blanco.png';
+import type { Contenido } from '../data/contenido';
+import { enlace } from '../lib/rutas';
+
+interface Props { c: Contenido; inicio?: boolean }
+const { c, inicio = true } = Astro.props;
+const otro = c.idioma === 'es' ? 'ca' : 'es';
+const ancla = (a: string) => (inicio ? a : enlace('inicio', c.idioma, a));
+---
+<header class="cabecera oscuro">
+  <div class="contenedor cabecera__fila">
+    <a class="cabecera__logo" href={enlace('inicio', c.idioma)} aria-label={c.sitio.logo}>
+      <Image src={logo} alt="" width={74} height={64} densities={[1, 2]} loading="eager" />
+    </a>
+    <nav class="cabecera__menu" aria-label="Menú">
+      {c.sitio.menu.map((m) => <a href={ancla(m.ancla)}>{m.texto}</a>)}
+    </nav>
+    <a class="cabecera__idioma" href={enlace('inicio', otro)} hreflang={otro} lang={otro} title={c.sitio.idiomaEtiqueta}>{c.sitio.idioma}</a>
+  </div>
+</header>
+
+<style>
+  .cabecera { position: relative; z-index: 2; background: var(--marino); }
+  .cabecera__fila { display: flex; align-items: center; gap: 24px; padding-block: 20px; }
+  .cabecera__logo { display: block; width: 64px; flex: none; }
+  .cabecera__logo img { width: 100%; }
+  .cabecera__menu { display: none; gap: 28px; margin-left: auto; font-weight: 600; font-size: 1rem; }
+  .cabecera__menu a { text-decoration: none; padding-block: 8px; }
+  .cabecera__menu a:hover { text-decoration: underline; }
+  .cabecera__idioma {
+    margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
+    min-width: 48px; min-height: 48px; padding: 0 16px; border-radius: 999px;
+    box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.35);
+    font-weight: 700; font-size: 0.9375rem; text-decoration: none;
+  }
+  .cabecera__idioma:hover { box-shadow: inset 0 0 0 2px var(--blanco); }
+  @media (min-width: 900px) {
+    .cabecera__logo { width: 74px; }
+    .cabecera__menu { display: flex; }
+    .cabecera__idioma { margin-left: 8px; }
+  }
+</style>

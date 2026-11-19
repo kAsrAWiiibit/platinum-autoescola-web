@@ -1,0 +1,77 @@
+---
+/** Pie: el anillo en grande, contacto, Instagram, legales e idioma */
+import { Image } from 'astro:assets';
+
+import logo from '../fotos/logo-blanco.png';
+import type { Contenido } from '../data/contenido';
+import { negocio } from '../data/negocio.mjs';
+import { mailto, tel, whatsapp } from '../lib/contacto';
+import { enlace, type Pagina } from '../lib/rutas';
+import type { Idioma } from '../lib/textos';
+import Anillo from './Anillo.astro';
+import Icono from './Icono.astro';
+
+interface Props { c: Contenido; otroIdioma: Idioma; pagina: Pagina }
+const { c, otroIdioma, pagina } = Astro.props;
+const d = negocio.direccion;
+---
+<footer class="pie oscuro">
+  <Anillo class="pie__anillo" grosor={18} />
+  <div class="contenedor pie__rejilla">
+    <div class="pie__marca">
+      <Image src={logo} alt={negocio.nombre} width={150} height={130} />
+    </div>
+    <div>
+      <h2 class="pie__titulo">{c.pie.contacto}</h2>
+      <ul class="pie__lista">
+        <li><a href={tel}><Icono nombre="phone" tam={18} />{negocio.telefono.visible}</a></li>
+        <li><a href={whatsapp()} target="_blank" rel="noopener"><Icono nombre="whatsapp" tam={18} />{negocio.whatsapp.visible}</a></li>
+        <li><a href={mailto}><Icono nombre="mail" tam={18} />{negocio.email}</a></li>
+        <li><a href={negocio.instagram.url} target="_blank" rel="noopener"><Icono nombre="instagram" tam={18} />@{negocio.instagram.usuario}</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="pie__titulo">{c.ubicacion.direccionTitulo}</h2>
+      <address class="pie__direccion">{d.calle}<br />{d.cp} {d.ciudad} ({d.provincia})</address>
+    </div>
+    <div>
+      <h2 class="pie__titulo">{c.pie.legal}</h2>
+      <ul class="pie__lista">
+        <li><a href={enlace('avisoLegal', c.idioma)}>{c.pie.avisoLegal}</a></li>
+        <li><a href={enlace('privacidad', c.idioma)}>{c.pie.privacidad}</a></li>
+        <li><a href={enlace('cookies', c.idioma)}>{c.pie.cookies}</a></li>
+        <li><a href={enlace(pagina, otroIdioma)} hreflang={otroIdioma} lang={otroIdioma}>{c.sitio.idioma}</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="contenedor pie__final">
+    <p>{c.pie.copyright}</p>
+    <a href="#contenido">{c.pie.volver}</a>
+  </div>
+</footer>
+
+<style>
+  .pie { position: relative; overflow: hidden; padding-top: clamp(64px, 9vw, 120px); padding-bottom: 32px; }
+  .pie__anillo {
+    position: absolute; width: min(520px, 90vw); right: -14%; top: -18%;
+    color: var(--marino-2);
+  }
+  .pie__anillo :global(.anillo__trazo) { stroke: var(--marino-2); }
+  .pie__rejilla { position: relative; display: grid; gap: 40px; grid-template-columns: 1fr; }
+  .pie__marca img { width: 120px; }
+  .pie__titulo { font-size: 0.9375rem; font-stretch: 100%; font-weight: 700; letter-spacing: 0; color: var(--suave-oscuro); margin-bottom: 14px; }
+  .pie__lista { display: grid; gap: 6px; }
+  .pie__lista a { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; text-decoration: none; }
+  .pie__lista a:hover { text-decoration: underline; }
+  .pie__direccion { font-style: normal; line-height: 1.6; }
+  .pie__final {
+    position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+    margin-top: 56px; padding-top: 24px; font-size: var(--paso-pequeno); color: var(--suave-oscuro);
+  }
+  .pie__final a { min-height: 40px; display: inline-flex; align-items: center; }
+  @media (min-width: 700px) { .pie__rejilla { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) {
+    .pie__rejilla { grid-template-columns: 1.2fr 1.3fr 1fr 1fr; }
+    .pie__marca img { width: 150px; }
+  }
+</style>

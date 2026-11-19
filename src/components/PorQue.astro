@@ -1,0 +1,111 @@
+---
+/**
+ * Por qué Platinum: experiencia, trato y la flota con sus fotos (de la web actual del cliente). El 208 no tiene
+ * foto de calidad: va en un bloque de color con su nombre. Las fotos se abren con una persiana al aparecer.
+ */
+import type { ImageMetadata } from 'astro';
+import { Picture } from 'astro:assets';
+
+import type { Contenido } from '../data/contenido';
+import { completo } from '../lib/pendiente';
+import Dato from './Dato.astro';
+import SiCompleto from './SiCompleto.astro';
+
+interface Props { c: Contenido }
+const { c } = Astro.props;
+const p = c.porque;
+const fotos = import.meta.glob<ImageMetadata>('/src/fotos/*.webp', { eager: true, import: 'default' });
+const foto = (archivo: string) => fotos[`/src/fotos/${archivo}`] ?? (() => { throw new Error(`No existe src/fotos/${archivo}`); })();
+---
+<section class="seccion porque" aria-labelledby="titulo-porque">
+  <div class="contenedor">
+    <div class="porque__cabeza revela">
+      <h2 id="titulo-porque">{p.titulo}</h2>
+      <div class="porque__textos">
+        <p class="entradilla">{p.experiencia}</p>
+        <div>
+          <h3>{p.tratoTitulo}</h3>
+          <p>{p.trato}</p>
+        </div>
+        <SiCompleto datos={[p.alumnos, p.aprobados]} donde="Por qué Platinum: alumnos y aprobados">
+          <p class="porque__cifras">
+            <span><Dato v={completo(p.alumnos) ? p.alumnosTexto(p.alumnos) : p.alumnos} donde="alumnos" /></span>
+            <span><Dato v={completo(p.aprobados) ? p.aprobadosTexto(p.aprobados) : p.aprobados} donde="aprobados" /></span>
+          </p>
+        </SiCompleto>
+      </div>
+    </div>
+
+    <div class="flota">
+      <div class="flota__cabeza revela">
+        <h3>{p.flotaTitulo}</h3>
+        <p>{p.flota}</p>
+      </div>
+      <ul class="flota__lista revela">
+        {p.vehiculos.map((v) => (
+          <li class:list={['vehiculo', `vehiculo--${v.tipo}`, !v.foto && 'vehiculo--sin-foto']}>
+            <div class="vehiculo__foto">
+              {v.foto ? (
+                <Picture src={foto(v.foto)} alt={v.alt} formats={['avif', 'webp']} fallbackFormat="webp" widths={[360, 540, 720]} sizes="(min-width: 900px) 30vw, 46vw" loading="lazy" />
+              ) : (
+                <span class="vehiculo__nombre-grande" aria-hidden="true">{v.id}</span>
+              )}
+            </div>
+            <p class="vehiculo__modelo">{v.modelo}</p>
+            <p class="vehiculo__tipo">{v.etiqueta}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .porque { background: var(--papel); }
+  .porque__cabeza { display: grid; gap: 28px; }
+  .porque__textos { display: grid; gap: 24px; align-content: start; }
+  .porque__textos .entradilla { max-width: 36ch; }
+  .porque__textos h3 { margin-bottom: 6px; }
+  .porque__textos p { color: var(--tinta-suave); }
+  .porque__textos .entradilla { color: var(--tinta); }
+  .porque__cifras { display: flex; gap: 24px; flex-wrap: wrap; font-weight: 700; }
+
+  .flota { margin-top: clamp(56px, 8vw, 104px); }
+  .flota__cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; margin-bottom: 24px; }
+  .flota__cabeza h3 { font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); }
+  .flota__cabeza p { color: var(--tinta-suave); }
+  .flota__lista { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .vehiculo { display: grid; align-content: start; }
+  .vehiculo__foto {
+    aspect-ratio: 4 / 3; border-radius: var(--radio); background: var(--blanco);
+    display: grid; place-items: center; overflow: hidden;
+  }
+  .vehiculo__foto :global(img) { width: 88%; height: 88%; object-fit: contain; }
+  .vehiculo--sin-foto .vehiculo__foto { background: var(--platino); box-shadow: none; }
+  .vehiculo__nombre-grande { font-weight: 800; font-stretch: 125%; font-size: clamp(3rem, 10vw, 6rem); letter-spacing: -0.04em; color: var(--marino); }
+  .vehiculo__modelo { margin-top: 12px; font-weight: 700; line-height: 1.2; }
+  .vehiculo__tipo { font-size: var(--paso-pequeno); color: var(--tinta-suave); }
+  /* En el móvil el 208 (sin foto) ocupa la fila entera como una franja, para que no quede uno suelto */
+  .vehiculo--sin-foto { grid-column: span 2; }
+  .vehiculo--sin-foto .vehiculo__foto { aspect-ratio: 3 / 1; }
+
+  /* Persiana: cada foto se abre de abajo arriba mientras la imagen se asienta (solo con movimiento) */
+  :global(.mov) .flota__lista .vehiculo__foto { clip-path: inset(100% 0 0 0 round var(--radio)); transition: clip-path 1100ms var(--salida); transition-delay: calc(var(--i, 0) * 110ms); }
+  :global(.mov) .flota__lista .vehiculo__foto :global(img) { transform: scale(1.12); transition: transform 1300ms var(--salida); transition-delay: calc(var(--i, 0) * 110ms); }
+  :global(.mov) .flota__lista.visto .vehiculo__foto { clip-path: inset(0 0 0 0 round var(--radio)); }
+  :global(.mov) .flota__lista.visto .vehiculo__foto :global(img) { transform: none; }
+  :global(.mov) .flota__lista > * { transform: none; opacity: 1; }
+
+  @media (min-width: 900px) {
+    .porque__cabeza { grid-template-columns: 1.2fr 1fr; gap: 64px; }
+    .flota__lista { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+    .vehiculo--coche { grid-column: span 2; }
+    .vehiculo--sin-foto .vehiculo__foto { aspect-ratio: 4 / 3; }
+    .vehiculo--moto { grid-column: span 3; }
+    .vehiculo--moto .vehiculo__foto { aspect-ratio: 16 / 9; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.mov) .flota__lista .vehiculo__foto { clip-path: none; transition: none; }
+    :global(.mov) .flota__lista .vehiculo__foto :global(img) { transform: none; transition: none; }
+  }
+</style>

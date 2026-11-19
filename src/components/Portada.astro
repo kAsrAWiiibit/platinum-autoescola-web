@@ -1,0 +1,95 @@
+---
+/**
+ * Portada: el anillo del logo, enorme y recortado por la pantalla, en plata «platino» sobre marino. Título,
+ * los tres permisos con su precio y los dos botones (WhatsApp principal, Llamar). Todo texto: es el LCP.
+ */
+import type { Contenido } from '../data/contenido';
+import { tel } from '../lib/contacto';
+import Anillo from './Anillo.astro';
+import Icono from './Icono.astro';
+
+interface Props { c: Contenido }
+const { c } = Astro.props;
+const p = c.portada;
+---
+<section class="portada oscuro" aria-labelledby="titulo-portada">
+  <Anillo class="portada__anillo" grosor={20} />
+  <div class="contenedor portada__contenido">
+    <h1 id="titulo-portada">
+      <span class="portada__t1">{p.titulo}</span>
+      <span class="portada__t2">{p.titulo2}</span>
+    </h1>
+    <p class="portada__entradilla">{p.entradilla}</p>
+
+    <ul class="portada__precios" aria-label={p.preciosEtiqueta}>
+      {c.permisos.lista.map((x) => (
+        <li>
+          <a href={`#permiso-${x.id.toLowerCase()}`}>
+            <span class="portada__id" aria-hidden="true">{x.id}</span>
+            <span class="visualmente-oculto">{x.nombre}:</span>
+            <span class="portada__precio">{x.precio}</span>
+            <span class="portada__veh">{x.vehiculo}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="portada__botones" data-botones-portada>
+      <a class="boton boton--wa" href={p.whatsappUrl} target="_blank" rel="noopener" data-evento="whatsapp-portada">
+        <Icono nombre="whatsapp" tam={22} />{p.whatsapp}<span class="visualmente-oculto"> {c.barra.abre}</span>
+      </a>
+      <a class="boton boton--borde" href={tel} aria-label={p.llamarEtiqueta} data-evento="llamar-portada">
+        <Icono nombre="phone" tam={20} />{p.llamar}
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .portada { position: relative; overflow: hidden; padding-bottom: 56vw; }
+  .portada__anillo {
+    position: absolute; z-index: 0; color: var(--platino);
+    width: 128vw; left: 50%; top: calc(100% - 50vw); transform: translateX(-42%);
+  }
+  .portada__contenido { position: relative; z-index: 1; padding-top: clamp(20px, 5vw, 72px); }
+  h1 { font-size: var(--paso-portada); line-height: 0.95; letter-spacing: -0.03em; }
+  @media (min-width: 900px) { h1 { font-size: clamp(3.5rem, 1.2rem + 4.2vw, 5rem); } }
+  .portada__t1 { display: block; font-stretch: 125%; }
+  .portada__t2 {
+    display: block; margin-top: 0.25em; font-size: 0.5em; line-height: 1.05; font-stretch: 112%;
+    letter-spacing: -0.02em; color: var(--platino); max-width: 16ch;
+  }
+  .portada__entradilla { margin-top: 20px; font-size: var(--paso-entrada); line-height: 1.35; color: var(--suave-oscuro); max-width: 30ch; }
+
+  .portada__precios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 28px; max-width: 560px; }
+  .portada__precios a {
+    display: grid; gap: 2px; height: 100%; padding: 14px 12px 14px;
+    border-radius: var(--radio); background: var(--marino-2); text-decoration: none;
+    transition: background-color 180ms var(--salida);
+  }
+  .portada__precios a:hover { background: var(--azul-oscuro); }
+  .portada__id { font-weight: 800; font-stretch: 125%; font-size: 1.75rem; line-height: 1; letter-spacing: -0.02em; }
+  .portada__precio { margin-top: 8px; font-weight: 700; font-size: 1.125rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .portada__veh { font-size: 0.8125rem; line-height: 1.25; color: var(--suave-oscuro); }
+
+  .portada__botones { display: grid; gap: 10px; margin-top: 24px; max-width: 560px; }
+  @media (min-width: 520px) {
+    .portada__botones { grid-template-columns: 1.4fr 1fr; }
+  }
+
+  @media (min-width: 900px) {
+    .portada { padding-bottom: clamp(80px, 10vw, 140px); min-height: min(860px, calc(100svh - 104px)); }
+    .portada__anillo {
+      width: min(112vh, 900px); left: auto; right: -22vw; top: 50%; transform: translateY(-46%);
+    }
+    .portada__contenido { padding-top: clamp(32px, 6vh, 88px); }
+    .portada__t2 { max-width: 15ch; }
+    .portada__precios a { padding: 18px 18px 16px; }
+    .portada__id { font-size: 2.25rem; }
+    .portada__precio { font-size: 1.375rem; }
+    .portada__veh { font-size: 0.875rem; }
+  }
+  @media (min-width: 1500px) {
+    .portada__anillo { right: calc((100vw - var(--ancho)) / 2 - 360px); }
+  }
+</style>

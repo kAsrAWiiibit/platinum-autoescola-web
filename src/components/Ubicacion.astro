@@ -1,0 +1,91 @@
+---
+/**
+ * Ubicación: dirección, horario (pendiente) y «Cómo llegar». El mapa de Google solo se carga si se pide (así la
+ * web no pone cookies de terceros y no pesa al abrirla).
+ */
+import type { Contenido } from '../data/contenido';
+import { negocio } from '../data/negocio.mjs';
+import { tel } from '../lib/contacto';
+import { completo } from '../lib/pendiente';
+import Anillo from './Anillo.astro';
+import Dato from './Dato.astro';
+import Icono from './Icono.astro';
+import SiCompleto from './SiCompleto.astro';
+
+interface Props { c: Contenido }
+const { c } = Astro.props;
+const u = c.ubicacion;
+const d = negocio.direccion;
+---
+<section id="ubicacion" class="seccion ubicacion" aria-labelledby="titulo-ubicacion">
+  <div class="contenedor ubicacion__rejilla">
+    <div class="ubicacion__datos revela">
+      <h2 id="titulo-ubicacion">{u.titulo}</h2>
+      <div>
+        <h3>{u.direccionTitulo}</h3>
+        <address>{d.calle}<br />{d.cp} {d.ciudad} ({d.provincia})</address>
+      </div>
+      <SiCompleto datos={[u.horarioOficina, u.horarioClases]} donde="Ubicación: horario">
+        <div>
+          <h3>{u.horarioTitulo}</h3>
+          <p><Dato v={completo(u.horarioOficina) ? u.oficinaTexto(u.horarioOficina) : u.horarioOficina} donde="horario de oficina" /></p>
+          <p><Dato v={completo(u.horarioClases) ? u.clasesTexto(u.horarioClases) : u.horarioClases} donde="horario de clases" /></p>
+        </div>
+      </SiCompleto>
+      <div class="ubicacion__botones">
+        <a class="boton boton--marino" href={negocio.comoLlegar} target="_blank" rel="noopener"><Icono nombre="navigation" tam={20} />{u.comoLlegar}</a>
+        <a class="boton boton--borde" href={tel} aria-label={c.portada.llamarEtiqueta}><Icono nombre="phone" tam={20} />{negocio.telefono.visible}</a>
+      </div>
+    </div>
+
+    <div class="mapa" data-mapa={negocio.mapaEmbed} data-titulo={u.mapaTitulo}>
+      <Anillo class="mapa__anillo" grosor={14} />
+      <div class="mapa__portada">
+        <Icono nombre="map-pin" tam={40} />
+        <p class="mapa__calle">{d.calle}</p>
+        <button type="button" class="boton boton--blanco mapa__boton">{u.mapaBoton}</button>
+        <p class="mapa__aviso">{u.mapaAviso}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // El mapa de Google (con sus cookies) solo se carga cuando la persona lo pide
+  for (const mapa of document.querySelectorAll<HTMLElement>('[data-mapa]')) {
+    mapa.querySelector('button')?.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = mapa.dataset.mapa!;
+      iframe.title = mapa.dataset.titulo!;
+      iframe.loading = 'lazy';
+      iframe.referrerPolicy = 'no-referrer-when-downgrade';
+      iframe.allowFullscreen = true;
+      mapa.replaceChildren(iframe);
+      mapa.classList.add('mapa--cargado');
+      iframe.focus();
+    });
+  }
+</script>
+
+<style>
+  .ubicacion { background: var(--blanco); }
+  .ubicacion__rejilla { display: grid; gap: 40px; }
+  .ubicacion__datos { display: grid; gap: 24px; align-content: start; }
+  .ubicacion__datos h3 { font-size: var(--paso-pequeno); font-stretch: 100%; letter-spacing: 0; color: var(--tinta-suave); margin-bottom: 6px; }
+  address { font-style: normal; font-size: var(--paso-entrada); line-height: 1.35; font-weight: 600; }
+  .ubicacion__botones { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ubicacion__botones .boton--borde { color: var(--marino); }
+  .ubicacion__botones .boton--borde:hover { --fondo: var(--papel); }
+  .mapa {
+    position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radio);
+    background: var(--marino); color: var(--blanco); display: grid; place-items: center;
+  }
+  .mapa :global(.mapa__anillo) { position: absolute; width: 140%; right: -50%; bottom: -60%; color: var(--marino-2); }
+  .mapa__portada { position: relative; display: grid; justify-items: center; gap: 14px; padding: 24px; text-align: center; }
+  .mapa__calle { font-weight: 800; font-stretch: 118%; font-size: clamp(1.375rem, 1rem + 1.6vw, 2.25rem); line-height: 1.05; letter-spacing: -0.02em; text-wrap: balance; }
+  .mapa__aviso { font-size: var(--paso-pequeno); color: var(--suave-oscuro); max-width: 34ch; }
+  .mapa :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  @media (min-width: 900px) {
+    .ubicacion__rejilla { grid-template-columns: 5fr 7fr; gap: 64px; align-items: center; }
+  }
+</style>

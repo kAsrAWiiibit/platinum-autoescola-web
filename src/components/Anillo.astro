@@ -1,0 +1,24 @@
+---
+/**
+ * El motivo de la web: el anillo del logo de Platinum (un círculo abierto por la izquierda, con su barra
+ * vertical), dibujado con geometría simple. Sale enorme en la portada, como progreso en los pasos y como viñeta.
+ * `lleno` (0–4) pinta solo algunos cuartos del anillo: lo usan los pasos.
+ */
+interface Props { class?: string; lleno?: number; grosor?: number }
+const { class: clase, lleno = 4, grosor = 22 } = Astro.props;
+const r = 50 - grosor / 2;
+const c = 2 * Math.PI * r;
+// El hueco del logo: la barra vertical queda separada del arco
+const hueco = 0.07 * c;
+---
+<svg class:list={['anillo', clase]} viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+  {lleno < 4 && (
+    <circle class="anillo__fondo" cx="50" cy="50" r={r} fill="none" stroke-width={grosor} />
+  )}
+  <circle
+    class="anillo__trazo"
+    cx="50" cy="50" r={r} fill="none" stroke-width={grosor}
+    stroke-dasharray={`${(c * lleno) / 4 - (lleno === 4 ? hueco : 0)} ${c}`}
+    transform={lleno === 4 ? `rotate(${180 + (hueco / c) * 180} 50 50)` : 'rotate(-90 50 50)'}
+  />
+</svg>

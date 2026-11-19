@@ -1,0 +1,46 @@
+---
+/** Reseñas: sin inventar ninguna. Enlace a la ficha de Google; nota y número, cuando el cliente los dé. */
+import type { Contenido } from '../data/contenido';
+import { completo } from '../lib/pendiente';
+import Dato from './Dato.astro';
+import Icono from './Icono.astro';
+import SiCompleto from './SiCompleto.astro';
+
+interface Props { c: Contenido }
+const { c } = Astro.props;
+const r = c.resenas;
+---
+<section class="resenas" aria-labelledby="titulo-resenas">
+  <div class="contenedor resenas__fila revela">
+    <div class="resenas__marca" aria-hidden="true"><Icono nombre="google" tam={56} /></div>
+    <div class="resenas__texto">
+      <h2 id="titulo-resenas">{r.titulo}</h2>
+      <SiCompleto datos={[r.nota, r.numero]} donde="Reseñas: nota y número de Google">
+        <p class="resenas__nota">
+          <Dato v={completo(r.nota) ? r.notaTexto(r.nota) : r.nota} donde="nota de Google" /> ·
+          <Dato v={completo(r.numero) ? r.numeroTexto(r.numero) : r.numero} donde="reseñas de Google" />
+        </p>
+      </SiCompleto>
+      <p>{r.texto}</p>
+    </div>
+    <a class="boton boton--blanco" href={r.url} target="_blank" rel="noopener">
+      {r.boton}<Icono nombre="arrow-up-right" tam={20} />
+    </a>
+  </div>
+</section>
+
+<style>
+  .resenas { background: var(--azul); color: var(--blanco); padding-block: clamp(56px, 8vw, 104px); }
+  .resenas__fila { display: grid; gap: 24px; align-items: center; }
+  .resenas__marca { width: 88px; height: 88px; border-radius: 50%; background: var(--blanco); color: var(--azul); display: grid; place-items: center; }
+  .resenas__marca :global(svg) { width: 44px; height: 44px; }
+  .resenas__texto { display: grid; gap: 12px; }
+  .resenas__texto p { color: #e4edf6; max-width: 52ch; }
+  .resenas__nota { font-weight: 700; color: var(--blanco) !important; }
+  .resenas .boton { justify-self: start; }
+  @media (min-width: 900px) {
+    .resenas__fila { grid-template-columns: auto 1fr auto; gap: 40px; }
+    .resenas__marca { width: 120px; height: 120px; }
+    .resenas__marca :global(svg) { width: 56px; height: 56px; }
+  }
+</style>

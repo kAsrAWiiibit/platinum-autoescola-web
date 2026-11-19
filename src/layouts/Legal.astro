@@ -1,0 +1,79 @@
+---
+/**
+ * Páginas legales (borradores, ver BACKLOG): el texto sale de contenido/legal.md y legal.ca.md. Entiende
+ * «# Página», «## Apartado», párrafos y viñetas. Una línea con [pendiente: …] no sale en producción.
+ */
+import es from '../../contenido/legal.md?raw';
+import ca from '../../contenido/legal.ca.md?raw';
+
+import Cabecera from '../components/Cabecera.astro';
+import Pendiente from '../components/Pendiente.astro';
+import { contenido } from '../data/contenido';
+import { negocio } from '../data/negocio.mjs';
+import { MOSTRAR_PENDIENTES, ocultado } from '../lib/pendiente';
+import type { Pagina } from '../lib/rutas';
+import { rellena, type Idioma } from '../lib/textos';
+import Base from './Base.astro';
+
+interface Props { idioma: Idioma; pagina: Exclude<Pagina, 'inicio'> }
+const { idioma, pagina } = Astro.props;
+const c = contenido(idioma);
+const md = idioma === 'es' ? es : ca;
+const d = negocio.direccion;
+const vars = {
+  nombre: negocio.nombre,
+  direccion: `${d.calle}, ${d.cp} ${d.ciudad} (${d.provincia})`,
+  email: negocio.email,
+  telefono: negocio.telefono.visible,
+};
+
+// Bloque de la página: desde su «# Título {pagina}» hasta el siguiente «# »
+const bloques = md.split(/^# /m).slice(1).map((b) => {
+  const [cabeza, ...resto] = b.split('\n');
+  const [, titulo, clave] = cabeza.match(/^(.+?)\s*\{(\w+)\}\s*$/) ?? [];
+  return { titulo, clave, lineas: resto };
+});
+const bloque = bloques.find((b) => b.clave === pagina) ?? (() => { throw new Error(`legal: falta la página ${pagina} (${idioma})`); })();
+
+type Nodo = { tipo: 'h2' | 'p' | 'li'; texto: string; pendiente?: string };
+const nodos: Nodo[] = [];
+for (const linea of bloque.lineas.map((l) => l.trim()).filter(Boolean)) {
+  const m = linea.match(/\[pendiente:\s*([^\]]+)\]/);
+  const texto = rellena(linea.replace(/^(## |- )/, '').replace(/\s*\[pendiente:[^\]]+\]/, ''), vars, `legal ${pagina}`);
+  const tipo = linea.startsWith('## ') ? 'h2' : linea.startsWith('- ') ? 'li' : 'p';
+  if (m && !MOSTRAR_PENDIENTES) { ocultado(Astro.url.pathname, `${bloque.titulo}: ${texto}`, m[1]); continue; }
+  nodos.push({ tipo, texto, pendiente: m?.[1] });
+}
+// Agrupa las viñetas seguidas en listas
+const grupos: (Nodo | Nodo[])[] = [];
+for (const n of nodos) {
+  const ultimo = grupos.at(-1);
+  if (n.tipo === 'li' && Array.isArray(ultimo)) ultimo.push(n);
+  else grupos.push(n.tipo === 'li' ? [n] : n);
+}
+---
+<Base titulo={`${bloque.titulo} · ${negocio.nombre}`} descripcion={`${bloque.titulo} · ${negocio.nombre}, ${d.ciudad}.`} idioma={idioma} pagina={pagina}>
+  <Cabecera slot="cabecera" c={c} inicio={false} />
+  <div class="cabeza oscuro">
+    <div class="contenedor"><h1>{bloque.titulo}</h1></div>
+  </div>
+  <article class="contenedor legal">
+    {grupos.map((g) =>
+      Array.isArray(g) ? (
+        <ul>{g.map((n) => <li>{n.texto}{n.pendiente && <> <Pendiente nota={n.pendiente} /></>}</li>)}</ul>
+      ) : g.tipo === 'h2' ? (
+        <h2>{g.texto}</h2>
+      ) : (
+        <p>{g.texto}{g.pendiente && <> <Pendiente nota={g.pendiente} /></>}</p>
+      ),
+    )}
+  </article>
+</Base>
+
+<style>
+  .cabeza { padding-block: 24px 56px; }
+  .cabeza h1 { font-size: var(--paso-titulo); }
+  .legal { max-width: calc(72ch + 2 * var(--margen)); padding-block: 48px 96px; display: grid; gap: 16px; }
+  .legal h2 { font-size: 1.5rem; margin-top: 24px; }
+  .legal ul { display: grid; gap: 6px; padding-left: 1.2em; list-style: disc; }
+</style>

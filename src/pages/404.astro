@@ -1,0 +1,23 @@
+---
+import Cabecera from '../components/Cabecera.astro';
+import { contenido } from '../data/contenido';
+import Base from '../layouts/Base.astro';
+import { enlace } from '../lib/rutas';
+
+const c = contenido('es');
+---
+<Base titulo={`${c.error404.titulo} · Autoescola Platinum`} descripcion={c.error404.texto} idioma="es" indexar={false}>
+  <Cabecera slot="cabecera" c={c} inicio={false} />
+  <section class="oscuro error">
+    <div class="contenedor">
+      <h1>{c.error404.titulo}</h1>
+      <p class="entradilla">{c.error404.texto}</p>
+      <a class="boton boton--blanco" href={enlace('inicio', 'es')}>{c.error404.boton}</a>
+    </div>
+  </section>
+</Base>
+<style>
+  .error { padding-block: 48px 120px; }
+  .error .contenedor { display: grid; gap: 24px; justify-items: start; }
+  h1 { font-size: var(--paso-portada); max-width: 12ch; }
+</style>

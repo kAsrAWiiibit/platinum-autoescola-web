@@ -1,0 +1,29 @@
+---
+/** La landing completa, en el idioma de la página */
+import Base from '../layouts/Base.astro';
+import { contenido } from '../data/contenido';
+import type { Idioma } from '../lib/textos';
+import Apuntate from './Apuntate.astro';
+import Cabecera from './Cabecera.astro';
+import Pasos from './Pasos.astro';
+import Permisos from './Permisos.astro';
+import PorQue from './PorQue.astro';
+import Portada from './Portada.astro';
+import Preguntas from './Preguntas.astro';
+import Resenas from './Resenas.astro';
+import Ubicacion from './Ubicacion.astro';
+
+interface Props { idioma: Idioma }
+const c = contenido(Astro.props.idioma);
+---
+<Base titulo={c.sitio.titulo} descripcion={c.sitio.descripcion} idioma={c.idioma} pagina="inicio" datosNegocio>
+  <Cabecera slot="cabecera" c={c} />
+  <Portada c={c} />
+  <Permisos c={c} />
+  <Pasos c={c} />
+  <PorQue c={c} />
+  <Resenas c={c} />
+  <Preguntas c={c} />
+  <Apuntate c={c} />
+  <Ubicacion c={c} />
+</Base>

@@ -1,0 +1,168 @@
+---
+/**
+ * «Apúntate»: un cupón para recortar. Sin backend: al enviarlo, valida y abre WhatsApp con el mensaje montado
+ * con los datos. La web no guarda nada (ni cookies, ni almacenamiento, ni envíos a terceros).
+ */
+import type { Contenido } from '../data/contenido';
+import { mailto, tel, whatsapp } from '../lib/contacto';
+import { enlace } from '../lib/rutas';
+import Icono from './Icono.astro';
+
+interface Props { c: Contenido }
+const { c } = Astro.props;
+const a = c.apuntate;
+const [antes, despues] = a.privacidad.split(a.privacidadEnlace);
+const datos = {
+  numero: a.numeroWhatsapp,
+  plantilla: a.plantilla,
+  plantillaDuda: a.plantillaDuda,
+  permisos: Object.fromEntries(c.permisos.lista.map((x) => [x.id, x.id])),
+};
+---
+<section id="apuntate" class="seccion apuntate" aria-labelledby="titulo-apuntate">
+  <div class="contenedor">
+    <div class="cupon revela">
+      <div class="cupon__cabeza">
+        <h2 id="titulo-apuntate">{a.titulo}</h2>
+        <p>{a.entradilla}</p>
+        <p class="cupon__aviso">{a.aviso}</p>
+      </div>
+      <div class="cupon__perforado" aria-hidden="true"></div>
+      <form class="cupon__form" action={whatsapp()} method="get" target="_blank" novalidate data-apuntate={JSON.stringify(datos)}>
+        <div class="campo">
+          <label for="f-nombre">{a.nombre}</label>
+          <input id="f-nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" aria-describedby="e-nombre" />
+          <p id="e-nombre" class="campo__error" hidden>{a.errores.nombre}</p>
+        </div>
+        <div class="campo">
+          <label for="f-telefono">{a.telefono}</label>
+          <input id="f-telefono" name="telefono" type="tel" autocomplete="tel-national" inputmode="tel" required maxlength="20" aria-describedby="e-telefono" />
+          <p id="e-telefono" class="campo__error" hidden>{a.errores.telefono}</p>
+        </div>
+        <div class="campo">
+          <label for="f-permiso">{a.permiso}</label>
+          <div class="selector">
+            <select id="f-permiso" name="permiso" required aria-describedby="e-permiso">
+              <option value="">{a.permisoElige}</option>
+              {a.opciones.map((o) => <option value={o.valor}>{o.texto}</option>)}
+              <option value="?">{a.permisoDuda}</option>
+            </select>
+            <Icono nombre="chevron-down" tam={20} class="selector__flecha" />
+          </div>
+          <p id="e-permiso" class="campo__error" hidden>{a.errores.permiso}</p>
+        </div>
+        <div class="campo">
+          <label for="f-mensaje">{a.mensaje}</label>
+          <textarea id="f-mensaje" name="mensaje" rows="3" maxlength="500" aria-describedby="a-mensaje"></textarea>
+          <p id="a-mensaje" class="campo__ayuda">{a.mensajeAyuda}</p>
+        </div>
+        <div class="campo campo--casilla">
+          <input id="f-privacidad" name="privacidad" type="checkbox" required aria-describedby="e-privacidad" />
+          <label for="f-privacidad">{antes}<a href={enlace('privacidad', c.idioma)}>{a.privacidadEnlace}</a>{despues}</label>
+          <p id="e-privacidad" class="campo__error" hidden>{a.errores.privacidad}</p>
+        </div>
+        <button class="boton boton--wa cupon__enviar" type="submit">
+          <Icono nombre="whatsapp" tam={22} />{a.boton}
+        </button>
+      </form>
+    </div>
+    <p class="apuntate__otros">
+      {a.otros.split(/(\d{2,3} \d{3} \d{2} \d{2}|\S+@\S+\.\w+)/).map((trozo) =>
+        /^\d/.test(trozo) ? <a href={tel}>{trozo}</a> : trozo.includes('@') ? <a href={mailto}>{trozo}</a> : trozo,
+      )}
+    </p>
+  </div>
+</section>
+
+<script>
+  // Valida y abre WhatsApp con el mensaje montado. No guarda nada ni lo envía a ningún otro sitio.
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-apuntate]')) {
+    const d = JSON.parse(form.dataset.apuntate!) as { numero: string; plantilla: string; plantillaDuda: string };
+    const campo = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const telefono = (v: string) => v.replace(/[\s.\-()]/g, '').replace(/^(\+34|0034)/, '');
+    const reglas: Record<string, () => boolean> = {
+      nombre: () => campo('nombre').value.trim().length >= 2,
+      telefono: () => /^[6789]\d{8}$/.test(telefono(campo('telefono').value)),
+      permiso: () => campo('permiso').value !== '',
+      privacidad: () => campo('privacidad').checked,
+    };
+    const comprobar = (n: string) => {
+      const ok = reglas[n]();
+      campo(n).setAttribute('aria-invalid', String(!ok));
+      form.querySelector<HTMLElement>(`#e-${n}`)!.hidden = ok;
+      return ok;
+    };
+    for (const n of Object.keys(reglas)) {
+      campo(n).addEventListener(n === 'privacidad' || n === 'permiso' ? 'change' : 'blur', () => {
+        if (campo(n).hasAttribute('aria-invalid')) comprobar(n);
+      });
+    }
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fallos = Object.keys(reglas).filter((n) => !comprobar(n));
+      if (fallos.length) return campo(fallos[0]).focus();
+      const permiso = campo('permiso').value;
+      const rellena = (t: string) =>
+        t.replace('{nombre}', campo('nombre').value.trim()).replace('{permiso}', permiso).replace('{telefono}', telefono(campo('telefono').value));
+      const mensaje = campo('mensaje').value.trim();
+      const texto = rellena(permiso === '?' ? d.plantillaDuda : d.plantilla) + (mensaje ? `\n\n${mensaje}` : '');
+      const url = `https://wa.me/${d.numero}?text=${encodeURIComponent(texto)}`;
+      if (!window.open(url, '_blank', 'noopener')) location.href = url;
+    });
+  }
+</script>
+
+<style>
+  .apuntate { padding-top: 0; }
+  .cupon {
+    --tono: var(--azul);
+    position: relative; display: grid; border-radius: var(--radio); background: var(--tono); color: var(--blanco);
+  }
+  .cupon__cabeza { display: grid; gap: 14px; align-content: start; padding: clamp(24px, 4vw, 48px); }
+  .cupon__cabeza h2 { font-size: clamp(2.5rem, 1.6rem + 4vw, 4.5rem); }
+  .cupon__cabeza p { color: #e4edf6; max-width: 36ch; }
+  .cupon__aviso { font-size: var(--paso-pequeno); font-weight: 600; }
+
+  /* Perforado: muescas del color del fondo en los extremos y puntos entre ellas */
+  .cupon__perforado { position: relative; height: 0; margin-inline: 24px; border-top: 4px dotted var(--papel); }
+  .cupon__perforado::before, .cupon__perforado::after {
+    content: ''; position: absolute; top: -16px; width: 28px; height: 28px; border-radius: 50%; background: var(--papel);
+  }
+  .cupon__perforado::before { left: -40px; }
+  .cupon__perforado::after { right: -40px; }
+
+  .cupon__form { display: grid; gap: 14px; padding: clamp(24px, 4vw, 48px); }
+  .campo { display: grid; gap: 6px; }
+  .campo label { font-weight: 600; font-size: 0.9375rem; }
+  input:not([type='checkbox']), select, textarea {
+    width: 100%; min-height: 54px; padding: 14px 16px; border: 2px solid transparent; border-radius: 10px;
+    background: var(--blanco); color: var(--tinta); font: inherit; font-size: 1rem;
+    transition: border-color 160ms var(--salida);
+  }
+  textarea { resize: vertical; min-height: 96px; }
+  .selector { position: relative; }
+  select { appearance: none; padding-right: 48px; cursor: pointer; }
+  .selector :global(.selector__flecha) { position: absolute; right: 16px; top: 50%; translate: 0 -50%; color: var(--tinta); pointer-events: none; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--platino); outline-offset: 2px; }
+  [aria-invalid='true'] { border-color: var(--error-oscuro) !important; }
+  .campo__error { color: var(--blanco); background: var(--error); border-radius: 8px; padding: 6px 10px; font-size: var(--paso-pequeno); font-weight: 600; justify-self: start; }
+  .campo__ayuda { font-size: var(--paso-pequeno); color: #e4edf6; }
+  .campo--casilla { grid-template-columns: 28px 1fr; align-items: start; column-gap: 12px; }
+  .campo--casilla input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--marino); }
+  .campo--casilla label { font-weight: 400; font-size: 0.9375rem; line-height: 1.45; }
+  .campo--casilla .campo__error { grid-column: 2; }
+  .cupon__enviar { width: 100%; margin-top: 6px; }
+  .apuntate__otros { margin-top: 20px; color: var(--tinta-suave); }
+  .apuntate__otros a { color: var(--tinta); font-weight: 600; white-space: nowrap; }
+
+  @media (min-width: 900px) {
+    .cupon { grid-template-columns: 5fr auto 7fr; }
+    .cupon__cabeza { align-content: space-between; }
+    .cupon__perforado { width: 0; height: auto; margin: 24px 0; border-top: 0; border-left: 4px dotted var(--papel); }
+    .cupon__perforado::before, .cupon__perforado::after { left: -16px; right: auto; }
+    .cupon__perforado::before { top: -40px; }
+    .cupon__perforado::after { top: auto; bottom: -40px; }
+    .cupon__form { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+    .campo:nth-of-type(n + 3), .cupon__enviar { grid-column: span 2; }
+  }
+</style>
