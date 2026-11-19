@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-borradores/
+.astro/
+.DS_Store
+.taste-skill/
+.impeccable/
+.pendientes.jsonl
+# Originales descargados de la web actual (con metadatos): solo se publica lo optimizado de src/fotos/
+contenido/originales/
