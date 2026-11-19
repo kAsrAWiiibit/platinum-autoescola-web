@@ -3,8 +3,9 @@
 > **RESUME HERE** (19 de noviembre de 2026): demo completa y publicada en
 > https://kasrawiiibit.github.io/platinum-autoescola-web/ (es) y `/ca/` (ca). Landing con portada, permisos B/A2/A,
 > cómo funciona, por qué Platinum con la flota, reseñas (enlace a Google), preguntas, formulario «Apúntate» que abre
-> WhatsApp, ubicación con mapa bajo demanda y legales en borrador. Lighthouse móvil 100/100/100 y SEO 69 solo por el
-> `noindex` de la demo (100 con `DEMO=0`). `npm run build` y `npm run enlaces` sin errores.
+> WhatsApp, ubicación con mapa bajo demanda y legales en borrador. Lighthouse móvil en la URL publicada: 98/100/100 y
+> SEO 66 solo por el `noindex` de la demo (100 en todo con `DEMO=0`). `npm run build` y `npm run enlaces` sin
+> errores (también con la ruta base de Pages). Capturas en `docs/capturas/`.
 > **Siguiente:** reunión con el cliente (`docs/presentacion.md`). Con sus respuestas: rellenar los `pendiente()` de
 > `src/data/pendientes.ts`, los `[pendiente]` de `contenido/legal*.md`, revisar el catalán y pasar a su dominio
 > (ver «Pasar a platinumautoescola.com»).
@@ -75,6 +76,12 @@
 - **Imagen para compartir** generada con sharp (texto en Helvetica del sistema): sustituir por una diseñada si se
   quiere más fina.
 - **404** solo en castellano (GitHub Pages sirve una única 404).
+- **robots.txt en la demo:** GitHub Pages lo publica en `/platinum-autoescola-web/robots.txt`, que los buscadores no
+  leen (solo miran la raíz del dominio). Lo que de verdad saca la demo de Google es el `noindex` de cada página.
+- **Avisos del inspector de diseño que se aceptan:** «icon-cards» y «eyebrow» en las tarjetas de permisos (el brief
+  pide tarjetas comparables; en el móvil, el botón de una tarjeta queda encima del título de la siguiente),
+  «covered-text» (la barra fija del móvil tapa a ratos el final de la pantalla), sin vídeo (no hay material propio)
+  y Archivo en vez de la fuente propuesta.
 
 ## Cómo se probó
 

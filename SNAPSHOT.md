@@ -60,5 +60,6 @@ sea demo: `noindex` y `robots.txt` con `Disallow: /` (`integraciones/pendientes.
 
 - `integraciones/pendientes.mjs`: lista lo ocultado y falla si hay `[pendiente` en `dist/`.
 - `scripts/enlaces.mjs` (`npm run enlaces`): `tel:`, `wa.me`, `mailto:`, anclas y enlaces internos.
-- Lighthouse móvil (19/11/2026, local): 100 · 100 · 100 · 69 con `noindex` (100 en SEO con `DEMO=0`).
-- Capturas finales: `docs/capturas/` (390 y 1440, local y publicada).
+- Lighthouse móvil (19/11/2026): local 100 · 100 · 100 · SEO 69; publicada 98 · 100 · 100 · SEO 66 (LCP 1,7 s, CLS 0).
+  SEO solo pierde `is-crawlable` por el `noindex` de la demo; con `DEMO=0`, 100 en las cuatro.
+- Capturas finales: `docs/capturas/` (`publicada-*`, `publicada-ca-*` y `local-*`, a 390 y 1440).
